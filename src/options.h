@@ -95,6 +95,6 @@ void optionsParseFileName(const char *);
 void optionsParseAutoselect(char *);
 void optionsParseDisplay(char *);
 void optionsParseNote(char *);
-long long options_parsenum(const char *, long long, long long,
+long long optionsParseNum(const char *, long long, long long,
     const char *[static 1]);
 int optionsCompareWindowClassName(const char *);
