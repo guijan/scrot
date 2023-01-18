@@ -6,7 +6,7 @@ Copyright 1999-2000 Tom Gilbert <tom@linuxbrit.co.uk,
 Copyright 2009      James Cameron <quozl@us.netrek.org>
 Copyright 2010      Ibragimov Rinat <ibragimovrinat@mail.ru>
 Copyright 2017      Stoney Sauce <stoneysauce@gmail.com>
-Copyright 2019-2022 Daniel T. Borelli <danieltborelli@gmail.com>
+Copyright 2019-2023 Daniel T. Borelli <danieltborelli@gmail.com>
 Copyright 2020      Sean Brennan <zettix1@gmail.com>
 Copyright 2021-2023 Guilherme Janczak <guilherme.janczak@yandex.com>
 Copyright 2021      IFo Hancroft <contact@ifohancroft.com>
@@ -85,6 +85,7 @@ struct ScrotOptions {
     int autoselectW;
     SelectionMode selection;
     int monitor;
+    Window windowId;
 };
 
 extern struct ScrotOptions opt;
@@ -96,5 +97,5 @@ void optionsParseAutoselect(char *);
 void optionsParseDisplay(char *);
 void optionsParseNote(char *);
 long long optionsParseNum(const char *, long long, long long,
-    const char *[static 1]);
+    const char *[static 1], int);
 int optionsCompareWindowClassName(const char *);

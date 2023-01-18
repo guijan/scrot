@@ -9,7 +9,7 @@ Copyright 2009      James Cameron <quozl@us.netrek.org>
 Copyright 2010      Ibragimov Rinat <ibragimovrinat@mail.ru>
 Copyright 2017      Stoney Sauce <stoneysauce@gmail.com>
 Copyright 2019      Daniel Lublin <daniel@lublin.se>
-Copyright 2019-2022 Daniel T. Borelli <danieltborelli@gmail.com>
+Copyright 2019-2023 Daniel T. Borelli <danieltborelli@gmail.com>
 Copyright 2019      Jade Auer <jade@trashwitch.dev>
 Copyright 2020      Sean Brennan <zettix1@gmail.com>
 Copyright 2021      Christopher R. Nelson <christopher.nelson@languidnights.com>
@@ -85,6 +85,7 @@ struct ScrotOptions opt = {
     .lineMode = LINE_MODE_S_CLASSIC,
     .stackDirection = HORIZONTAL,
     .monitor = -1,
+    .windowId = None,
 };
 
 static void showUsage(void);
@@ -104,10 +105,10 @@ static void optionsParseThumbnail(char *);
  * char *errmsg;
  * unsigned int nonnegative;
  * if ((nonnegative = optionsParseNum(optarg, 0, UINT_MAX, &errmsg)) == NULL)
- *     errx(EXIT_FAILURE, "-n: '%s' is %s", optarg, errmsg);
+ *     errx(EXIT_FAILURE, "-n: '%s' is %s", optarg, errmsg, 10);
  */
 long long optionsParseNum(const char *str, long long min, long long max,
-    const char *errmsg[static 1])
+    const char *errmsg[static 1], int base)
 {
     char *end = NULL;
     long long rval;
@@ -119,7 +120,7 @@ long long optionsParseNum(const char *str, long long min, long long max,
     *errmsg = NULL;
 
     errno = 0;
-    rval = strtoll(str, &end, 10);
+    rval = strtoll(str, &end, base);
     if (errno == ERANGE) {
         *errmsg = "not representable";
     } else if (*str == '\0') {
@@ -219,7 +220,7 @@ static void optionsParseSelection(const char *optarg)
     if (opt.selection.mode == SELECTION_MODE_BLUR) {
         const char *errmsg;
         opt.selection.paramNum = optionsParseNum(value,
-            SELECTION_MODE_BLUR_MIN, SELECTION_MODE_BLUR_MAX, &errmsg);
+            SELECTION_MODE_BLUR_MIN, SELECTION_MODE_BLUR_MAX, &errmsg, 10);
         if (errmsg)
             errx(EXIT_FAILURE, "option --select: '%s' is %s", value, errmsg);
     } else { // SELECTION_MODE_HIDE
@@ -271,7 +272,7 @@ static void optionsParseLine(char *optarg)
             }
             break;
         case Width:
-            opt.lineWidth = optionsParseNum(value, 1, 8, &errmsg);
+            opt.lineWidth = optionsParseNum(value, 1, 8, &errmsg, 10);
             if (errmsg) {
                 if (value == NULL)
                     value = "(null)";
@@ -306,7 +307,7 @@ static void optionsParseLine(char *optarg)
             break;
         case Opacity:
             opt.lineOpacity = optionsParseNum(value,
-                SELECTION_OPACITY_MIN, SELECTION_OPACITY_MAX, &errmsg);
+                SELECTION_OPACITY_MIN, SELECTION_OPACITY_MAX, &errmsg, 10);
             if (errmsg) {
                 if (value == NULL)
                         value = "(null)";
@@ -359,7 +360,7 @@ static char *getPathOfStdout(void)
 
 void optionsParse(int argc, char *argv[])
 {
-    static char stropts[] = "a:ofipbcd:e:hmq:s::t:uvzn:l:D:k::C:S:F:M:";
+    static char stropts[] = "a:ofipbcd:e:hmq:s::t:uvzn:l:D:k::C:S:F:M:w:";
 
     static struct option lopts[] = {
         /* actions */
@@ -390,6 +391,7 @@ void optionsParse(int argc, char *argv[])
         { "script", required_argument, 0, 'S' },
         { "file", required_argument, 0, 'F' },
         { "monitor", required_argument, 0, 'M'},
+        { "window", required_argument, 0, 'w'},
         { 0, 0, 0, 0 }
     };
     int optch = 0, cmdx = 0;
@@ -410,7 +412,7 @@ void optionsParse(int argc, char *argv[])
             opt.border = 1;
             break;
         case 'd':
-            opt.delay = optionsParseNum(optarg, 0, INT_MAX, &errmsg);
+            opt.delay = optionsParseNum(optarg, 0, INT_MAX, &errmsg, 10);
             if (errmsg) {
                 errx(EXIT_FAILURE, "option --delay: '%s' is %s", optarg,
                     errmsg);
@@ -423,7 +425,7 @@ void optionsParse(int argc, char *argv[])
             opt.multidisp = 1;
             break;
         case 'q':
-            opt.quality = optionsParseNum(optarg, 1, 100, &errmsg);
+            opt.quality = optionsParseNum(optarg, 1, 100, &errmsg, 10);
             if (errmsg) {
                 errx(EXIT_FAILURE, "option --quality: '%s' is %s", optarg,
                     errmsg);
@@ -482,9 +484,16 @@ void optionsParse(int argc, char *argv[])
             optionsParseFileName(optarg);
             break;
         case 'M':
-            opt.monitor = optionsParseNum(optarg, 0, INT_MAX, &errmsg);
+            opt.monitor = optionsParseNum(optarg, 0, INT_MAX, &errmsg, 10);
             if (errmsg) {
                 errx(EXIT_FAILURE, "option --monitor: '%s' is %s", optarg,
+                    errmsg);
+            }
+            break;
+        case 'w':
+            opt.windowId = optionsParseNum(optarg, None/*0L*/, LONG_MAX, &errmsg, 16);
+            if (errmsg) {
+                errx(EXIT_FAILURE, "option --window: '%s' is %s", optarg,
                     errmsg);
             }
             break;
@@ -574,7 +583,7 @@ void optionsParseAutoselect(char *optarg)
             errx(EXIT_FAILURE, "option --autoselect: too many dimensions");
 
         min = i >= 2; /* X,Y offsets may be 0. Width and height may not. */
-        *dimensions[i] = optionsParseNum(token, min, INT_MAX, &errmsg);
+        *dimensions[i] = optionsParseNum(token, min, INT_MAX, &errmsg, 10);
         if (errmsg) {
             errx(EXIT_FAILURE, "option --autoselect: '%s' is %s", token,
                 errmsg);
@@ -603,19 +612,19 @@ static void optionsParseThumbnail(char *optarg)
         /* optarg holds the width, height holds the height. */
         *height++ = '\0';
 
-        opt.thumbWorP = optionsParseNum(optarg, 1, INT_MAX, &errmsg);
+        opt.thumbWorP = optionsParseNum(optarg, 1, INT_MAX, &errmsg, 10);
         if (errmsg) {
             errx(EXIT_FAILURE, "option --thumb: resolution width '%s' is %s",
                 optarg, errmsg);
         }
 
-        opt.thumbH = optionsParseNum(height, 1, INT_MAX, &errmsg);
+        opt.thumbH = optionsParseNum(height, 1, INT_MAX, &errmsg, 10);
         if (errmsg) {
             errx(EXIT_FAILURE, "option --thumb: resolution height '%s' is %s",
                 height, errmsg);
         }
     } else { /* optarg is a percentage. */
-        opt.thumbWorP = optionsParseNum(optarg, 1, INT_MAX, &errmsg);
+        opt.thumbWorP = optionsParseNum(optarg, 1, INT_MAX, &errmsg, 10);
         if (errmsg) {
             errx(EXIT_FAILURE, "option --thumb: percentage '%s' is %s", optarg,
                 errmsg);

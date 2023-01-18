@@ -1,6 +1,6 @@
 /* note.c
 
-Copyright 2019-2022 Daniel T. Borelli <danieltborelli@gmail.com>
+Copyright 2019-2023 Daniel T. Borelli <danieltborelli@gmail.com>
 Copyright 2021-2023 Guilherme Janczak <guilherme.janczak@yandex.com>
 Copyright 2021      IFo Hancroft <contact@ifohancroft.com>
 Copyright 2021      Peter Wu <peterwu@hotmail.com>
@@ -132,7 +132,7 @@ void scrotNoteNew(char const *const format)
                 errx(EXIT_FAILURE, "Error --note option : Malformed syntax for -f, required number.");
 
             const int fontSize = optionsParseNum(++number, 1, INT_MAX,
-                &errmsg);
+                &errmsg, 10);
             if (errmsg) {
                     errx(EXIT_FAILURE, "option --note: font size '%s' is %s",
                         number, errmsg);
@@ -172,7 +172,7 @@ void scrotNoteNew(char const *const format)
 
                 if (space)
                     *space = '\0';
-                const int color = optionsParseNum(c, 0, 255, &errmsg);
+                const int color = optionsParseNum(c, 0, 255, &errmsg, 10);
                 if (errmsg) {
                         errx(EXIT_FAILURE, "option --note: color '%s' is %s", c,
                             errmsg);
