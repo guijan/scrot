@@ -246,7 +246,6 @@ static Imlib_Image scrotGrabWindowById(Window const window)
         scrotGrabMousePointer(im, rx, ry);
     clientWindow = window;
     return im;
-
 }
 
 static Imlib_Image scrotGrabFocused(void)
