@@ -62,7 +62,8 @@ OPTIONS
                             500x200.
   -u, --focused             Use the currently focused window.
   -v, --version             Output version information and exit.
-  -w, --window              Window identifier to capture (hexadecimal value, see xwininfo(2)).
+  -w, --window              Window identifier to capture.
+                            Must be a valid identifier, in hexadecimal notation (see xwininfo(1))
   -z, --silent              Prevent beeping.
   -                         Redirection to standard output. The output image
                             format is PNG.
@@ -175,7 +176,7 @@ NOTE FORMAT
 
 SEE ALSO
   optipng(1)
-  xwininfo(2)
+  xwininfo(1)
 
 
 AUTHOR
