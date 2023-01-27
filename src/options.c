@@ -90,12 +90,21 @@ struct ScrotOptions opt = {
 
 static void showUsage(void);
 static void showVersion(void);
+static long long optionsParseNumBase(const char *, long long, long long,
+    const char *[static 1], int);
 static void optionsParseThumbnail(char *);
 
-/* optionsParseNum: "string to number" function.
+long long optionsParseNum(const char *str, long long min, long long max,
+    const char *errmsg[static 1])
+{
+    return optionsParseNumBase(str, min, max, errmsg, 10);
+}
+
+/* optionsParseNumBase: "string to number" function.
  *
  * Parses the string representation of an integer in str, and simultaneously
- * ensures that it is >= min and <= max.
+ * ensures that it is >= min and <= max. The string representation must be of
+ * base `base`.
  *
  * Returns the integer and sets *errmsg to NULL on success.
  * Returns 0 and sets *errmsg to a pointer to a string containing the
@@ -107,8 +116,8 @@ static void optionsParseThumbnail(char *);
  * if ((nonnegative = optionsParseNum(optarg, 0, UINT_MAX, &errmsg)) == NULL)
  *     errx(EXIT_FAILURE, "-n: '%s' is %s", optarg, errmsg);
  */
-long long optionsParseNum(const char *str, long long min, long long max,
-    const char *errmsg[static 1])
+static long long optionsParseNumBase(const char *str, long long min, long long max,
+    const char *errmsg[static 1], int base)
 {
     char *end = NULL;
     long long rval;
@@ -120,7 +129,7 @@ long long optionsParseNum(const char *str, long long min, long long max,
     *errmsg = NULL;
 
     errno = 0;
-    rval = strtoll(str, &end, 0);
+    rval = strtoll(str, &end, base);
     if (errno == ERANGE) {
         *errmsg = "not representable";
     } else if (*str == '\0') {
